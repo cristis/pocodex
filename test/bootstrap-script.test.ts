@@ -789,6 +789,315 @@ describe("renderBootstrapScript", () => {
     }
   });
 
+  it("forces multiline enter behavior for mobile sessions without changing the host state", async () => {
+    const script = renderBootstrapScript({
+      sentryOptions: {
+        buildFlavor: "stable",
+        appVersion: "1",
+        buildNumber: "123",
+        codexAppSessionId: "session-id",
+      },
+      stylesheetHref: "/pocodex.css",
+    });
+
+    type Listener = (...args: unknown[]) => void;
+
+    class EventTargetLike {
+      private readonly listeners = new Map<string, Listener[]>();
+
+      addEventListener(type: string, listener: Listener, _options?: unknown): void {
+        const existing = this.listeners.get(type) ?? [];
+        existing.push(listener);
+        this.listeners.set(type, existing);
+      }
+
+      dispatchEvent(event: { type: string }): boolean {
+        const listeners = this.listeners.get(event.type) ?? [];
+        for (const listener of listeners) {
+          listener(event);
+        }
+        return true;
+      }
+    }
+
+    class Element extends EventTargetLike {
+      dataset: Record<string, string> = {};
+      parentElement: Element | null = null;
+      hidden = false;
+      id = "";
+      rel = "";
+      href = "";
+      textContent = "";
+
+      appendChild<T extends Element>(child: T): T {
+        child.parentElement = this;
+        return child;
+      }
+
+      append(..._nodes: Element[]): void {}
+
+      contains(_node: Element): boolean {
+        return false;
+      }
+
+      replaceChildren(..._nodes: Element[]): void {}
+
+      remove(): void {}
+
+      after(_node: Element): void {}
+
+      querySelector(_selector: string): Element | null {
+        return null;
+      }
+
+      querySelectorAll(_selector: string): {
+        length: number;
+        item(index: number): Element | null;
+        forEach(callback: (value: Element, key: number, parent: unknown) => void): void;
+      } {
+        return {
+          length: 0,
+          item: () => null,
+          forEach: () => {},
+        };
+      }
+
+      getAttribute(_name: string): string | null {
+        return null;
+      }
+    }
+
+    class HTMLDivElement extends Element {}
+    class HTMLLinkElement extends Element {}
+
+    class Document extends EventTargetLike {
+      readyState = "complete";
+      visibilityState = "visible";
+      documentElement = new Element();
+      head = new Element();
+      body = new Element();
+
+      createElement(tagName: string): Element {
+        if (tagName === "div") {
+          return new HTMLDivElement();
+        }
+        if (tagName === "link") {
+          return new HTMLLinkElement();
+        }
+        return new Element();
+      }
+
+      getElementsByTagName(tagName: string): Element[] {
+        return tagName === "head" ? [this.head] : [];
+      }
+
+      querySelector(_selector: string): Element | null {
+        return null;
+      }
+
+      querySelectorAll(_selector: string) {
+        return {
+          length: 0,
+          item: () => null,
+          forEach: () => {},
+        };
+      }
+
+      getElementById(_id: string): Element | null {
+        return null;
+      }
+
+      hasFocus(): boolean {
+        return true;
+      }
+    }
+
+    class MutationObserver {
+      constructor(_callback: (...args: unknown[]) => void) {}
+
+      observe(_target: Element, _options: unknown): void {}
+    }
+
+    class Request {
+      method = "GET";
+
+      constructor(readonly url: string) {}
+    }
+
+    class Response {
+      constructor(
+        readonly body: string,
+        readonly init: {
+          status: number;
+          headers: Record<string, string>;
+        },
+      ) {}
+    }
+
+    class MessageEvent {
+      constructor(
+        readonly type: string,
+        readonly init: { data: unknown },
+      ) {}
+    }
+
+    class WebSocket {
+      static readonly CONNECTING = 0;
+      static readonly OPEN = 1;
+      static readonly CLOSING = 2;
+      static readonly CLOSED = 3;
+      static latest: WebSocket | null = null;
+
+      readonly listeners = new Map<string, Listener[]>();
+      readyState = WebSocket.CONNECTING;
+
+      constructor(readonly url: string) {
+        WebSocket.latest = this;
+      }
+
+      addEventListener(type: string, listener: Listener): void {
+        const existing = this.listeners.get(type) ?? [];
+        existing.push(listener);
+        this.listeners.set(type, existing);
+      }
+
+      send(_message: string): void {}
+
+      close(_code?: number, _reason?: string): void {
+        this.readyState = WebSocket.CLOSED;
+      }
+
+      emit(type: string, event: unknown): void {
+        const listeners = this.listeners.get(type) ?? [];
+        for (const listener of listeners) {
+          listener(event);
+        }
+      }
+    }
+
+    const dispatchedMessages: unknown[] = [];
+    const storage = new Map<string, string>();
+    const document = new Document();
+    const windowObject = new EventTargetLike() as EventTargetLike & {
+      location: {
+        href: string;
+        protocol: string;
+        host: string;
+        reload: () => void;
+      };
+      history: {
+        pushState: (data: unknown, unused: string, url?: string | URL | null) => void;
+        replaceState: (data: unknown, unused: string, url?: string | URL | null) => void;
+      };
+      fetch: (input: unknown, init?: unknown) => Promise<unknown>;
+      setTimeout: (callback: () => void, delay: number) => number;
+      clearTimeout: (id: number) => void;
+      matchMedia: (query: string) => { matches: boolean; media: string };
+    };
+
+    windowObject.location = {
+      href: "http://127.0.0.1:8787/local/thread-1?token=secret",
+      protocol: "http:",
+      host: "127.0.0.1:8787",
+      reload: () => {},
+    };
+    windowObject.history = {
+      pushState: (_data: unknown, _unused: string, _url?: string | URL | null) => {},
+      replaceState: (_data: unknown, _unused: string, _url?: string | URL | null) => {},
+    };
+    windowObject.fetch = async () => ({ ok: true, status: 200 });
+    windowObject.setTimeout = (_callback: () => void) => 0;
+    windowObject.clearTimeout = (_id: number) => {};
+    windowObject.matchMedia = (query: string) => ({
+      matches: query.includes("max-width"),
+      media: query,
+    });
+
+    const originalWindowDispatchEvent = windowObject.dispatchEvent.bind(windowObject);
+    windowObject.dispatchEvent = (event: MessageEvent) => {
+      if (event.type === "message") {
+        dispatchedMessages.push(event.init.data);
+      }
+      return originalWindowDispatchEvent(event);
+    };
+
+    const context = vm.createContext({
+      window: windowObject,
+      document,
+      URL,
+      HTMLDivElement,
+      HTMLLinkElement,
+      MutationObserver,
+      MessageEvent,
+      Request,
+      Response,
+      WebSocket,
+      sessionStorage: {
+        setItem: (key: string, value: string) => {
+          storage.set(key, value);
+        },
+        getItem: (key: string) => storage.get(key) ?? null,
+      },
+      Element,
+      Object,
+      Array,
+      Map,
+      Set,
+      Math,
+      JSON,
+      Promise,
+      String,
+      Number,
+      Boolean,
+      encodeURIComponent,
+    });
+
+    vm.runInContext(script, context);
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const socket = WebSocket.latest;
+    expect(socket).not.toBeNull();
+
+    socket?.emit("message", {
+      data: JSON.stringify({
+        type: "bridge_message",
+        message: {
+          type: "persisted-atom-sync",
+          state: {
+            "enter-behavior": "enter",
+            "agent-mode": "auto",
+          },
+        },
+      }),
+    });
+
+    socket?.emit("message", {
+      data: JSON.stringify({
+        type: "bridge_message",
+        message: {
+          type: "persisted-atom-updated",
+          key: "enter-behavior",
+          value: "enter",
+        },
+      }),
+    });
+
+    expect(dispatchedMessages).toContainEqual({
+      type: "persisted-atom-sync",
+      state: {
+        "enter-behavior": "newline",
+        "agent-mode": "auto",
+      },
+    });
+    expect(dispatchedMessages).toContainEqual({
+      type: "persisted-atom-updated",
+      key: "enter-behavior",
+      value: "newline",
+      deleted: false,
+    });
+  });
+
   it("includes home-directory path shortening in the import dialog bootstrap", () => {
     const script = renderBootstrapScript({
       sentryOptions: {

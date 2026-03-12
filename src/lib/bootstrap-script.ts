@@ -737,6 +737,31 @@ function bootstrapPocodexInBrowser(config: BootstrapScriptConfig): void {
     window.dispatchEvent(new MessageEvent("message", { data: message }));
   }
 
+  function rewriteBridgeMessageForViewport(message: unknown): unknown {
+    if (!isMobileSidebarViewport() || !isRecord(message) || typeof message.type !== "string") {
+      return message;
+    }
+
+    if (message.type === "persisted-atom-sync") {
+      const state = isRecord(message.state) ? { ...message.state } : {};
+      state["enter-behavior"] = "newline";
+      return {
+        ...message,
+        state,
+      };
+    }
+
+    if (message.type === "persisted-atom-updated" && message.key === "enter-behavior") {
+      return {
+        ...message,
+        value: "newline",
+        deleted: false,
+      };
+    }
+
+    return message;
+  }
+
   function handlePocodexBridgeMessage(message: unknown): boolean {
     if (!isRecord(message) || typeof message.type !== "string") {
       return false;
@@ -912,10 +937,13 @@ function bootstrapPocodexInBrowser(config: BootstrapScriptConfig): void {
 
       switch (envelope.type) {
         case "bridge_message":
-          if (handlePocodexBridgeMessage(envelope.message)) {
-            break;
+          {
+            const bridgeMessage = rewriteBridgeMessageForViewport(envelope.message);
+            if (handlePocodexBridgeMessage(bridgeMessage)) {
+              break;
+            }
+            dispatchHostMessage(bridgeMessage);
           }
-          dispatchHostMessage(envelope.message);
           break;
         case "worker_message": {
           const listeners = workerSubscribers.get(envelope.workerName);
