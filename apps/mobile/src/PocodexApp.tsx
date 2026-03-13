@@ -334,6 +334,7 @@ export default function PocodexApp({
       <StatusBar
         backgroundColor="transparent"
         barStyle="dark-content"
+        hidden={screenMode === "browser"}
         translucent={screenMode === "browser"}
       />
       <SafeAreaView
