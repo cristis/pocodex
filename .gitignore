@@ -1,4 +1,44 @@
-dist
-node_modules
+# Node / TypeScript
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+
+# Local machine / editors
 .DS_Store
-coverage
+.idea/
+.vscode/
+*.plist
+
+# AI tools (local settings)
+.claude/
+
+# Expo / React Native
+.expo/
+.expo-shared/
+*.jsbundle
+
+# Android
+apps/mobile/android/.gradle/
+apps/mobile/android/.cxx/
+apps/mobile/android/build/
+apps/mobile/android/app/build/
+apps/mobile/android/local.properties
+apps/mobile/android/*.iml
+apps/mobile/android/*.hprof
+
+# iOS
+apps/mobile/ios/build/
+apps/mobile/ios/DerivedData/
+apps/mobile/ios/Pods/
+apps/mobile/ios/xcuserdata/
+apps/mobile/ios/*.xcuserstate
+apps/mobile/ios/.xcode.env.local

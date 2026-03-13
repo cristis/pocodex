@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Codex",
+    "slug": "pocodex-mobile",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "scheme": "pocodex-mobile",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "icon": "./assets/icon.png",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsArbitraryLoadsInWebContent": true
+        }
+      },
+      "bundleIdentifier": "com.anonymous.pocodexmobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png"
+      },
+      "usesCleartextTraffic": true,
+      "package": "com.anonymous.pocodexmobile"
+    }
+  }
+}

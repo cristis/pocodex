@@ -98,6 +98,24 @@ Pocodex creates an HTTP server on the host machine and serves the patched webvie
 
 An optional token can gate the browser session. Pocodex supports multiple concurrent browser sessions that share the same backend state.
 
+## Mobile Wrapper App
+
+This repository also contains an Expo-based mobile wrapper app under [`apps/mobile`](./apps/mobile) for iOS and Android. It stores a full Pocodex URL locally, then opens that URL inside a native `WebView` on later launches.
+
+The mobile app falls back to `http://cristis-macbook-pro-16:8800` when no saved override exists, so you can launch directly into a local Pocodex session and only open settings when you need to point it somewhere else.
+
+The mobile wrapper is intended for personal or internal use on trusted networks. It supports plain `http://` LAN endpoints so it can connect directly to a locally hosted Pocodex instance.
+
+Useful commands:
+
+```bash
+pnpm install
+pnpm run mobile:start
+pnpm run mobile:ios
+pnpm run mobile:android
+pnpm run mobile:test
+```
+
 ## Current Limitations
 
 - Native desktop behaviors such as notifications, badge updates, context menus, power-save controls, and window mode controls are blocked or stubbed
