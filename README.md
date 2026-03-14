@@ -102,7 +102,7 @@ An optional token can gate the browser session. Pocodex supports multiple concur
 
 This repository also contains an Expo-based mobile wrapper app under [`apps/mobile`](./apps/mobile) for iOS and Android. It stores a full Pocodex URL locally, then opens that URL inside a native `WebView` on later launches.
 
-The mobile app falls back to `http://cristis-macbook-pro-16:8800` when no saved override exists, so you can launch directly into a local Pocodex session and only open settings when you need to point it somewhere else.
+On first launch, or after clearing the saved endpoint, the mobile app opens its setup screen so you can paste the full Pocodex URL before loading the web view.
 
 The mobile wrapper is intended for personal or internal use on trusted networks. It supports plain `http://` LAN endpoints so it can connect directly to a locally hosted Pocodex instance.
 

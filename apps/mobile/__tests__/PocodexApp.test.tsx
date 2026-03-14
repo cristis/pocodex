@@ -1,6 +1,6 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 
-import PocodexApp, { DEFAULT_POCODEX_URL } from "../src/PocodexApp";
+import PocodexApp from "../src/PocodexApp";
 import type { SettingsStore } from "../src/storage";
 
 function createMemoryStore(initialUrl: string | null = null): SettingsStore {
@@ -24,15 +24,15 @@ function getLastWebViewProps(): Record<string, unknown> {
 }
 
 describe("PocodexApp", () => {
-  it("opens the default Pocodex URL when no saved URL exists", async () => {
+  it("starts on setup when no saved URL exists", async () => {
     const store = createMemoryStore();
     const screen = render(<PocodexApp settingsStore={store} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId("webview")).toBeTruthy();
+      expect(screen.getByTestId("url-input")).toBeTruthy();
     });
 
-    expect(getLastWebViewProps().source).toEqual({ uri: DEFAULT_POCODEX_URL });
+    expect(screen.queryByTestId("webview")).toBeNull();
   });
 
   it("saves a URL override and auto-opens it on the next launch", async () => {
@@ -40,15 +40,14 @@ describe("PocodexApp", () => {
     const firstLaunch = render(<PocodexApp settingsStore={store} />);
 
     await waitFor(() => {
-      expect(firstLaunch.getByTestId("settings-button")).toBeTruthy();
+      expect(firstLaunch.getByTestId("url-input")).toBeTruthy();
     });
 
-    fireEvent.press(firstLaunch.getByTestId("settings-button"));
     fireEvent.changeText(
-      firstLaunch.getByTestId("settings-url-input"),
+      firstLaunch.getByTestId("url-input"),
       "http://192.168.1.30:8787/?token=abc",
     );
-    fireEvent.press(firstLaunch.getByTestId("settings-save-button"));
+    fireEvent.press(firstLaunch.getByTestId("save-url-button"));
 
     await waitFor(() => {
       expect(firstLaunch.getByTestId("webview")).toBeTruthy();
@@ -84,7 +83,7 @@ describe("PocodexApp", () => {
     });
   });
 
-  it("resets a custom URL back to the default endpoint", async () => {
+  it("clears a saved URL back to first-run setup", async () => {
     const store = createMemoryStore("http://192.168.1.30:8787/?token=abc");
     const screen = render(<PocodexApp settingsStore={store} />);
 
@@ -96,8 +95,10 @@ describe("PocodexApp", () => {
     fireEvent.press(screen.getByTestId("clear-url-button"));
 
     await waitFor(() => {
-      expect(getLastWebViewProps().source).toEqual({ uri: DEFAULT_POCODEX_URL });
+      expect(screen.getByTestId("url-input")).toBeTruthy();
     });
+
+    expect(screen.queryByTestId("webview")).toBeNull();
   });
 
   it("shows retry and edit actions after a load error", async () => {

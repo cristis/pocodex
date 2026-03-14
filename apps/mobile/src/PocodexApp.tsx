@@ -28,8 +28,6 @@ interface PocodexAppProps {
 
 type ScreenMode = "booting" | "setup" | "browser";
 
-export const DEFAULT_POCODEX_URL = "http://cristis-macbook-pro-16:8800";
-
 function SettingsIcon() {
   if (Platform.OS === "android") {
     return (
@@ -75,10 +73,10 @@ export default function PocodexApp({
       }
 
       if (!savedUrl) {
-        setDraftUrl(DEFAULT_POCODEX_URL);
-        setCurrentUrl(DEFAULT_POCODEX_URL);
-        setIsPageLoading(true);
-        setScreenMode("browser");
+        setDraftUrl("");
+        setCurrentUrl(null);
+        setIsPageLoading(false);
+        setScreenMode("setup");
         return;
       }
 
@@ -148,15 +146,14 @@ export default function PocodexApp({
     setIsSaving(true);
     try {
       await settingsStore.clearUrl();
-      setCurrentUrl(DEFAULT_POCODEX_URL);
-      setDraftUrl(DEFAULT_POCODEX_URL);
+      setCurrentUrl(null);
+      setDraftUrl("");
       setDraftError(null);
       setPageError(null);
       setCanGoBack(false);
       setIsSettingsVisible(false);
-      setIsPageLoading(true);
-      setReloadKey((value) => value + 1);
-      setScreenMode("browser");
+      setIsPageLoading(false);
+      setScreenMode("setup");
     } finally {
       setIsSaving(false);
     }
@@ -172,7 +169,7 @@ export default function PocodexApp({
 
   function openSettings() {
     setDraftError(null);
-    setDraftUrl(currentUrl ?? DEFAULT_POCODEX_URL);
+    setDraftUrl(currentUrl ?? "");
     setIsSettingsVisible(true);
   }
 
@@ -381,7 +378,7 @@ export default function PocodexApp({
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Codex Settings</Text>
             <Text style={styles.modalBody}>
-              Update the saved endpoint or clear it to return to first-run setup.
+              Update the saved endpoint or clear it to return to the first-run setup screen.
             </Text>
 
             <Text style={styles.inputLabel}>Codex URL</Text>
@@ -429,7 +426,7 @@ export default function PocodexApp({
               ]}
               testID="clear-url-button"
             >
-              <Text style={styles.ghostDangerButtonLabel}>Reset to default URL</Text>
+              <Text style={styles.ghostDangerButtonLabel}>Clear saved URL</Text>
             </Pressable>
 
             <Pressable
