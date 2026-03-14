@@ -116,6 +116,8 @@ pnpm run mobile:android
 pnpm run mobile:test
 ```
 
+Detailed mobile build and run instructions live in [`apps/mobile/README.md`](./apps/mobile/README.md).
+
 ## Current Limitations
 
 - Native desktop behaviors such as notifications, badge updates, context menus, power-save controls, and window mode controls are blocked or stubbed
